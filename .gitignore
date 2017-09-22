@@ -4,5 +4,6 @@
 gradle/
 gradlew
 gradlew.bat
-build.gradle
 out/
+src/main/resources/
+src/test/resources/
