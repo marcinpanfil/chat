@@ -13,7 +13,12 @@ import org.springframework.messaging.simp.stomp.StompFrameHandler;
 import org.springframework.messaging.simp.stomp.StompHeaders;
 import org.springframework.messaging.simp.stomp.StompSession;
 import org.springframework.messaging.simp.stomp.StompSessionHandlerAdapter;
+import org.springframework.security.oauth2.client.DefaultOAuth2ClientContext;
+import org.springframework.security.oauth2.client.OAuth2RestTemplate;
+import org.springframework.security.oauth2.client.token.grant.password.ResourceOwnerPasswordResourceDetails;
+import org.springframework.security.oauth2.common.OAuth2AccessToken;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.web.socket.WebSocketHttpHeaders;
 import org.springframework.web.socket.client.standard.StandardWebSocketClient;
 import org.springframework.web.socket.messaging.WebSocketStompClient;
 import org.springframework.web.socket.sockjs.client.SockJsClient;
@@ -27,10 +32,10 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
+import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -58,16 +63,16 @@ public class ChatControllerIT {
         WebSocketStompClient stompClient = new WebSocketStompClient(new SockJsClient(createTransportClient()));
         stompClient.setMessageConverter(new MappingJackson2MessageConverter());
 
-        StompSession stompSession = stompClient.connect(URL,
-                new StompSessionHandlerAdapter() {
-                }).get(1, SECONDS);
+        StompSession stompSession = connectToServer(stompClient);
 
         stompSession.subscribe("/topic", createHandler());
-        stompSession.send("/app/message", new ChatMessage("test", "test"));
+        stompSession.send("/app/message", new ChatMessage("test"));
 
-        Message message = completableFuture.get(10, SECONDS);
+        Message message = completableFuture.get(60000, SECONDS);
         assertNotNull(message);
         assertEquals(message.getMsg(), "test");
+
+        stompSession.disconnect();
     }
 
     @Test
@@ -75,18 +80,18 @@ public class ChatControllerIT {
         WebSocketStompClient stompClient = new WebSocketStompClient(new SockJsClient(createTransportClient()));
         stompClient.setMessageConverter(new MappingJackson2MessageConverter());
 
-        StompSession stompSession = stompClient.connect(URL,
-                new StompSessionHandlerAdapter() {
-                }).get(1, SECONDS);
+        StompSession stompSession = connectToServer(stompClient);
 
         stompSession.subscribe("/topic/public", createHandler());
-        stompSession.send("/app/chat.addUser.public", new ChatMessage("login", "testuser"));
+        stompSession.send("/app/topic/public", new ChatMessage("login"));
 
-        Message message = completableFuture.get(10, SECONDS);
+        Message message = completableFuture.get(60000, SECONDS);
         assertNotNull(message);
         assertEquals(message.getMsg(), "login");
-        assertEquals(message.getUserName(), "testuser");
+        assertEquals(message.getUserName(), "test");
         assertEquals(1, eventListener.getSessionIds().size());
+
+        stompSession.disconnect();
     }
 
     private StompFrameHandler createHandler() {
@@ -109,6 +114,41 @@ public class ChatControllerIT {
         List<Transport> transports = new ArrayList<>(1);
         transports.add(new WebSocketTransport(new StandardWebSocketClient()));
         return transports;
+    }
+
+    private StompSession connectToServer(WebSocketStompClient stompClient) throws InterruptedException,
+            ExecutionException, TimeoutException {
+        return stompClient
+                .connect(URL, createHttpHeaders(), new StompSessionHandlerAdapter() {
+                })
+                .get(1, SECONDS);
+    }
+
+    private WebSocketHttpHeaders createHttpHeaders() {
+        WebSocketHttpHeaders httpHeaders = new WebSocketHttpHeaders();
+        httpHeaders.add("Authorization", "Bearer " + getOAuth2AccessToken().getValue());
+        return httpHeaders;
+    }
+
+    private OAuth2AccessToken getOAuth2AccessToken() {
+        ResourceOwnerPasswordResourceDetails resourceDetails = createResourceDetails();
+
+        DefaultOAuth2ClientContext clientContext = new DefaultOAuth2ClientContext();
+
+        OAuth2RestTemplate restTemplate = new OAuth2RestTemplate(resourceDetails, clientContext);
+        return restTemplate.getAccessToken();
+    }
+
+    private ResourceOwnerPasswordResourceDetails createResourceDetails() {
+        ResourceOwnerPasswordResourceDetails resourceDetails = new ResourceOwnerPasswordResourceDetails();
+        resourceDetails.setUsername("test");
+        resourceDetails.setPassword("test");
+        resourceDetails.setAccessTokenUri(String.format("http://localhost:%d/oauth/token", port));
+        resourceDetails.setClientId("chat");
+        resourceDetails.setClientSecret("secret");
+        resourceDetails.setGrantType("password");
+        resourceDetails.setScope(asList("read", "write"));
+        return resourceDetails;
     }
 
 }
