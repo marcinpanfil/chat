@@ -1,4 +1,4 @@
-package pl.mpanfil.chat;
+package pl.mpanfil.chat.web;
 
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -7,6 +7,8 @@ import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.messaging.simp.annotation.SubscribeMapping;
 import org.springframework.stereotype.Controller;
+import pl.mpanfil.chat.domain.ws.ChatMessage;
+import pl.mpanfil.chat.domain.ws.Message;
 
 import java.security.Principal;
 

@@ -18,10 +18,9 @@ import org.springframework.security.oauth2.config.annotation.web.configurers.Aut
  */
 
 @Configuration
-@EnableResourceServer
 @EnableAuthorizationServer
+@EnableResourceServer
 public class AuthServerOAuth2Config extends AuthorizationServerConfigurerAdapter {
-
 
     @Autowired
     private UserDetailsService userDetailsService;

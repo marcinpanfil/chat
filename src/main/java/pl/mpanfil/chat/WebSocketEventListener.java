@@ -10,6 +10,7 @@ import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.messaging.SessionConnectedEvent;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
+import pl.mpanfil.chat.domain.ws.ChatMessage;
 
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;

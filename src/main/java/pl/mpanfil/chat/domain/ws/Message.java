@@ -1,4 +1,4 @@
-package pl.mpanfil.chat;
+package pl.mpanfil.chat.domain.ws;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
