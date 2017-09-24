@@ -53,7 +53,7 @@ public class WebSocketEventListener {
         }
     }
 
-    List<String> getSessionIds() {
+    public List<String> getSessionIds() {
         return sessionIds;
     }
 }

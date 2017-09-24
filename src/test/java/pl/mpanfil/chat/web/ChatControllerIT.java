@@ -1,4 +1,4 @@
-package pl.mpanfil.chat;
+package pl.mpanfil.chat.web;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -24,6 +24,7 @@ import org.springframework.web.socket.messaging.WebSocketStompClient;
 import org.springframework.web.socket.sockjs.client.SockJsClient;
 import org.springframework.web.socket.sockjs.client.Transport;
 import org.springframework.web.socket.sockjs.client.WebSocketTransport;
+import pl.mpanfil.chat.WebSocketEventListener;
 import pl.mpanfil.chat.domain.ws.ChatMessage;
 import pl.mpanfil.chat.domain.ws.Message;
 
