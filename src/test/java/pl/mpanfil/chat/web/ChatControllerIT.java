@@ -17,6 +17,7 @@ import org.springframework.security.oauth2.client.DefaultOAuth2ClientContext;
 import org.springframework.security.oauth2.client.OAuth2RestTemplate;
 import org.springframework.security.oauth2.client.token.grant.password.ResourceOwnerPasswordResourceDetails;
 import org.springframework.security.oauth2.common.OAuth2AccessToken;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.web.socket.WebSocketHttpHeaders;
 import org.springframework.web.socket.client.standard.StandardWebSocketClient;
@@ -25,6 +26,8 @@ import org.springframework.web.socket.sockjs.client.SockJsClient;
 import org.springframework.web.socket.sockjs.client.Transport;
 import org.springframework.web.socket.sockjs.client.WebSocketTransport;
 import pl.mpanfil.chat.WebSocketEventListener;
+import pl.mpanfil.chat.domain.UserFactory;
+import pl.mpanfil.chat.domain.dto.AddUserFormDTO;
 import pl.mpanfil.chat.domain.ws.ChatMessage;
 import pl.mpanfil.chat.domain.ws.Message;
 
@@ -42,8 +45,10 @@ import static org.junit.Assert.assertNotNull;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@TestPropertySource("classpath:application-test.properties")
 public class ChatControllerIT {
 
+    private static boolean db = false;
     private static Logger LOG = LoggerFactory.getLogger(ChatControllerIT.class);
 
     @Value("${local.server.port}")
@@ -51,14 +56,22 @@ public class ChatControllerIT {
 
     private String URL;
     private CompletableFuture<Message> completableFuture;
-
+    private WebSocketHttpHeaders webSocketHttpHeaders;
     @Autowired
     private WebSocketEventListener eventListener;
+
+    @Autowired
+    private UserFactory userFactory;
 
     @Before
     public void setup() {
         completableFuture = new CompletableFuture<>();
         URL = "ws://localhost:" + port + "/websocket";
+        if (!db) {
+            userFactory.addUser(new AddUserFormDTO("test", "test", "test@test.pl"));
+            db = !db;
+        }
+        webSocketHttpHeaders = createHttpHeaders();
     }
 
     @Test
@@ -122,7 +135,7 @@ public class ChatControllerIT {
     private StompSession connectToServer(WebSocketStompClient stompClient) throws InterruptedException,
             ExecutionException, TimeoutException {
         return stompClient
-                .connect(URL, createHttpHeaders(), new StompSessionHandlerAdapter() {
+                .connect(URL, webSocketHttpHeaders, new StompSessionHandlerAdapter() {
                 })
                 .get(1, SECONDS);
     }

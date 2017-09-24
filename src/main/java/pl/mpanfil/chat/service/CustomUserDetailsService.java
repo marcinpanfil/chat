@@ -5,8 +5,9 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import pl.mpanfil.chat.domain.User;
+import pl.mpanfil.chat.domain.UserFactory;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -19,15 +20,19 @@ import java.util.List;
 @Service
 public class CustomUserDetailsService implements UserDetailsService {
 
-    private final PasswordEncoder passwordEncoder;
+    private final UserFactory userFactory;
 
     @Autowired
-    public CustomUserDetailsService(PasswordEncoder passwordEncoder) {
-        this.passwordEncoder = passwordEncoder;
+    public CustomUserDetailsService(UserFactory userFactory) {
+        this.userFactory = userFactory;
     }
 
     @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+    public UserDetails loadUserByUsername(String username) {
+        User user = userFactory.loadUserByUsername(username);
+        if (user == null) {
+            throw new UsernameNotFoundException("user not found");
+        }
         return new UserDetails() {
             @Override
             public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -39,12 +44,12 @@ public class CustomUserDetailsService implements UserDetailsService {
 
             @Override
             public String getPassword() {
-                return passwordEncoder.encode("test");
+                return user.getPassword();
             }
 
             @Override
             public String getUsername() {
-                return "test";
+                return username;
             }
 
             @Override

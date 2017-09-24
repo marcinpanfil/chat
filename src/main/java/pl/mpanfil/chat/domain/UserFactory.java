@@ -26,4 +26,8 @@ public class UserFactory {
         return user.getUserId();
     }
 
+    public User loadUserByUsername(String username) {
+        return userRepository.findByUsername(username);
+    }
+
 }

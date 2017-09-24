@@ -5,4 +5,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 interface UserRepository extends PagingAndSortingRepository<User, Long> {
+    User findByUsername(String username);
 }
